@@ -28,3 +28,9 @@ export interface Test {
   treatments: Treatment[]
   testType: OptimizationType
 }
+
+export enum NoTestType {
+  NoTest = 'NoTest'
+}
+
+export type TargettedContentType = NoTestType | OptimizationType

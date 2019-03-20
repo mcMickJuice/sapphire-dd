@@ -66,5 +66,9 @@ export async function getTestDataForSlice(
   nodeId: string,
   date: string
 ): Promise<Test[]> {
-  return Promise.resolve(testData)
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(nodeId === '55b0t' ? testData : [])
+    }, 2000)
+  })
 }
