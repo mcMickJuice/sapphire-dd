@@ -1,10 +1,10 @@
-enum Channel {
+export enum Channel {
   MWeb = 'MWEB',
   Web = 'WEB',
   App = 'APPS'
 }
 
-enum State {
+export enum State {
   Live = 'LIVE'
 }
 

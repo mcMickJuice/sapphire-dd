@@ -1,15 +1,23 @@
 import React from 'react'
-import { Select, MenuItem } from '@material-ui/core'
-import { OptimizationType } from './types'
+import { MenuItem } from '@material-ui/core'
+import { OptimizationType, Test } from './types'
+import { getTestDataForSlice } from './sapphire_service'
+import OutlinedSelect from './OutlinedSelect'
+
+enum NoTestType {
+  NoTest = 'NoTest'
+}
+
+type TargettedContentType = NoTestType | OptimizationType
 
 interface State {
-  selectedTestType: OptimizationType | null
+  selectedTestType: TargettedContentType
   selectedTestId?: string
   selectedTreatmentId?: string | undefined
 }
 
 const defaultState: State = {
-  selectedTestType: null
+  selectedTestType: NoTestType.NoTest
 }
 
 type Action = Initialize | TestTypeSelected | TestSelected | TreatmentSelected
@@ -21,7 +29,7 @@ interface Initialize {
 
 interface TestTypeSelected {
   type: 'selectTestType'
-  testType: OptimizationType | null
+  testType: TargettedContentType
 }
 
 interface TestSelected {
@@ -65,34 +73,108 @@ const reducer = (state: State, action: Action) => {
 }
 
 const SapphireSelect = () => {
+  const [isLoading, updateLoading] = React.useState(false)
+  const [testData, setTestData] = React.useState<Test[]>([])
   const [state, dispatch] = React.useReducer(reducer, defaultState)
 
-  function handleTestTypeChange({
-    target: { value }
-  }: {
-    target: { value: OptimizationType | null }
-  }) {
+  React.useEffect(() => {
+    updateLoading(true)
+    getTestDataForSlice('55b0t', '')
+      .then(tests => {
+        setTestData(tests)
+      })
+      .then(() => updateLoading(false))
+  }, [])
+
+  function handleTestTypeChange(evt: React.ChangeEvent<HTMLSelectElement>) {
+    const value = evt.target.value
+
     dispatch({
       type: 'selectTestType',
-      testType: value
+      testType: value as TargettedContentType
     })
   }
 
-  const { selectedTestType } = state
+  function handleTestChange(evt: React.ChangeEvent<HTMLSelectElement>) {
+    const value = evt.target.value
+
+    dispatch({
+      type: 'selectTest',
+      testId: value
+    })
+  }
+
+  function handleTreatmentChange(evt: React.ChangeEvent<HTMLSelectElement>) {
+    const value = evt.target.value
+
+    dispatch({
+      type: 'selectTreatment',
+      treatmentId: value
+    })
+  }
+
+  const { selectedTestType, selectedTestId, selectedTreatmentId } = state
+
+  const selectedTest =
+    selectedTestId != null
+      ? testData.find(t => t.id === selectedTestId)
+      : undefined
 
   return (
     <div>
-      <Select
-        fullWidth
-        variant="outlined"
-        value={selectedTestType || ''}
-        onChange={handleTestTypeChange}
-      >
-        <MenuItem value={''}>None Selected</MenuItem>
-        <MenuItem value={OptimizationType.Test}>A/B Test</MenuItem>
-        <MenuItem value={OptimizationType.Campaign}>Campaign</MenuItem>
-      </Select>
-      {}
+      {isLoading ? (
+        <div>Loading Data... </div>
+      ) : (
+        <div>
+          <OutlinedSelect
+            name="test-type"
+            label="Test Type"
+            value={selectedTestType || ''}
+            onChange={handleTestTypeChange}
+          >
+            <MenuItem value={NoTestType.NoTest}>No Targetted Content</MenuItem>
+            <MenuItem value={OptimizationType.Test}>A/B Test</MenuItem>
+            <MenuItem value={OptimizationType.Campaign}>Campaign</MenuItem>
+          </OutlinedSelect>
+          {/* <Select {...defaultSelectProps} /> */}
+
+          {selectedTestType != NoTestType.NoTest ? (
+            <div style={{ marginTop: '16px' }}>
+              <OutlinedSelect
+                name="test-select"
+                label="Select a Test"
+                onChange={handleTestChange}
+                value={selectedTestId || ''}
+              >
+                {testData
+                  .filter(t => t.testType === selectedTestType)
+                  .map(t => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.name}
+                    </MenuItem>
+                  ))}
+              </OutlinedSelect>
+            </div>
+          ) : null}
+          {selectedTest != null &&
+          selectedTestType === OptimizationType.Test ? (
+            <div style={{ marginTop: '16px' }}>
+              <OutlinedSelect
+                name="treatment-select"
+                label="Select a Treatment"
+                onChange={handleTreatmentChange}
+                value={selectedTreatmentId || ''}
+              >
+                {selectedTest.treatments.map(t => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.name}
+                  </MenuItem>
+                ))}
+              </OutlinedSelect>
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   )
 }

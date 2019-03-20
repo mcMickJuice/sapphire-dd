@@ -2,12 +2,12 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import theme from './theme'
 import SapphireSelect from './SapphireSelect'
-import { MuiThemeProvider, Button, TextField } from '@material-ui/core'
+import { MuiThemeProvider } from '@material-ui/core'
 
 function App() {
   return (
     <MuiThemeProvider theme={theme}>
-      <div>
+      <div style={{ width: '500px', margin: '24px auto' }}>
         <SapphireSelect />
       </div>
     </MuiThemeProvider>
